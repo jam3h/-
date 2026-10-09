@@ -39,6 +39,7 @@ class SettingsManager(context: Context) {
             .putBoolean("unplugged_alert_enabled", settings.unpluggedAlertEnabled)
             .putString("unplugged_message", settings.unpluggedMessage)
             .putBoolean("vibration_enabled", settings.vibrationEnabled)
+            .putString("voice_profile", settings.voiceProfile)
             .putFloat("speech_rate", settings.speechRate)
             .putFloat("speech_pitch", settings.speechPitch)
             .putInt("repeat_interval", settings.repeatIntervalMinutes)
@@ -48,33 +49,33 @@ class SettingsManager(context: Context) {
     }
 
     private fun loadSettings(): GuardianSettings {
+        val highThresh = prefs.getInt("high_threshold", 85)
+        val lowThresh = prefs.getInt("low_threshold", 20)
+        val defaultHighMsg = "أَبُو ظَلَام: تَمَّ شَحْنُ الهَاتِفِ $highThresh بِالمِئَة! أَزِل الشَّاحِنَ مِنَ الهَاتِفِ فَوْرَاً!"
+        val defaultLowMsg = "أَبُو ظَلَام: اِشْحَنْ هَاتِفَكَ بِسُرْعَة! البَطَّارِيَّةُ $lowThresh بِالمِئَة!"
+
         return GuardianSettings(
             serviceEnabled = prefs.getBoolean("service_enabled", true),
             highAlertEnabled = prefs.getBoolean("high_alert_enabled", true),
-            highThreshold = prefs.getInt("high_threshold", 85),
-            highMessage = prefs.getString(
-                "high_message",
-                "أبو ظلام، تم شحن الهاتف 85 بالمئة، أزل الشاحن من الهاتف"
-            ) ?: "أبو ظلام، تم شحن الهاتف 85 بالمئة، أزل الشاحن من الهاتف",
+            highThreshold = highThresh,
+            highMessage = prefs.getString("high_message", defaultHighMsg) ?: defaultHighMsg,
             lowAlertEnabled = prefs.getBoolean("low_alert_enabled", true),
-            lowThreshold = prefs.getInt("low_threshold", 20),
-            lowMessage = prefs.getString(
-                "low_message",
-                "أبو ظلام، اشحن هاتفك بسرعة"
-            ) ?: "أبو ظلام، اشحن هاتفك بسرعة",
+            lowThreshold = lowThresh,
+            lowMessage = prefs.getString("low_message", defaultLowMsg) ?: defaultLowMsg,
             pluggedAlertEnabled = prefs.getBoolean("plugged_alert_enabled", false),
             pluggedMessage = prefs.getString(
                 "plugged_message",
-                "أبو ظلام، تم توصيل الشاحن بنجاح"
-            ) ?: "أبو ظلام، تم توصيل الشاحن بنجاح",
+                "أَبُو ظَلَام: تَمَّ تَوْصِيلُ الشَّاحِنِ بِنَجَاح"
+            ) ?: "أَبُو ظَلَام: تَمَّ تَوْصِيلُ الشَّاحِنِ بِنَجَاح",
             unpluggedAlertEnabled = prefs.getBoolean("unplugged_alert_enabled", false),
             unpluggedMessage = prefs.getString(
                 "unplugged_message",
-                "أبو ظلام، تم فصل الشاحن"
-            ) ?: "أبو ظلام، تم فصل الشاحن",
+                "أَبُو ظَلَام: تَمَّ فَصْلُ الشَّاحِن"
+            ) ?: "أَبُو ظَلَام: تَمَّ فَصْلُ الشَّاحِن",
             vibrationEnabled = prefs.getBoolean("vibration_enabled", true),
-            speechRate = prefs.getFloat("speech_rate", 1.0f),
-            speechPitch = prefs.getFloat("speech_pitch", 1.0f),
+            voiceProfile = prefs.getString("voice_profile", "MONSTER") ?: "MONSTER",
+            speechRate = prefs.getFloat("speech_rate", 0.88f),
+            speechPitch = prefs.getFloat("speech_pitch", 0.58f),
             repeatIntervalMinutes = prefs.getInt("repeat_interval", 2),
             startOnBoot = prefs.getBoolean("start_on_boot", true)
         )

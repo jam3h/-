@@ -216,7 +216,7 @@ class BatteryGuardianService : Service() {
             if (shouldAlert) {
                 highAlertTriggeredCycle = true
                 lastHighAlertTime = now
-                val message = formatMessage(settings.highMessage, info.level)
+                val message = settings.resolveHighMessage(info.level)
                 triggerAlert(AlertType.HIGH_BATTERY, info.level, message)
             }
         } else if (!info.isCharging || info.level < (settings.highThreshold - 2)) {
@@ -233,7 +233,7 @@ class BatteryGuardianService : Service() {
             if (shouldAlert) {
                 lowAlertTriggeredCycle = true
                 lastLowAlertTime = now
-                val message = formatMessage(settings.lowMessage, info.level)
+                val message = settings.resolveLowMessage(info.level)
                 triggerAlert(AlertType.LOW_BATTERY, info.level, message)
             }
         } else if (info.isCharging || info.level > (settings.lowThreshold + 2)) {
@@ -270,7 +270,7 @@ class BatteryGuardianService : Service() {
             text = message,
             speechRate = settings.speechRate,
             pitch = settings.speechPitch,
-            playChimeFirst = true
+            playMonsterEffectFirst = true
         )
 
         // Record in history log

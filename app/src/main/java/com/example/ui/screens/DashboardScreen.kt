@@ -218,10 +218,10 @@ fun DashboardScreen(
                 .padding(horizontal = 4.dp)
         )
 
-        // 85% High Alert Test Card
+        // High Alert Test Card
         AlertTestCard(
             title = "تنبيه شحن ${settings.highThreshold}% (اكتمال الشحن)",
-            description = settings.highMessage,
+            description = settings.resolveHighMessage(settings.highThreshold),
             badge = "عند ${settings.highThreshold}% ⚡",
             icon = Icons.Default.BatteryChargingFull,
             accentColor = ElectricCyan,
@@ -229,10 +229,10 @@ fun DashboardScreen(
             testTag = "test_high_alert_button"
         )
 
-        // 20% Low Alert Test Card
+        // Low Alert Test Card
         AlertTestCard(
             title = "تنبيه بطارية ${settings.lowThreshold}% (انخفاض الشحن)",
-            description = settings.lowMessage,
+            description = settings.resolveLowMessage(settings.lowThreshold),
             badge = "أقل من ${settings.lowThreshold}% ⚠️",
             icon = Icons.Default.BatteryAlert,
             accentColor = DangerRed,

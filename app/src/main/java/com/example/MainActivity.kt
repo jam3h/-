@@ -203,6 +203,7 @@ fun AbuThalamApp(viewModel: MainViewModel = viewModel()) {
                             vibration, rate, pitch, interval, boot, plugged, unplugged
                         )
                     },
+                    onSetVoiceProfile = { viewModel.setVoiceProfile(it) },
                     onTestHigh = { viewModel.testHighAlert() },
                     onTestLow = { viewModel.testLowAlert() }
                 )

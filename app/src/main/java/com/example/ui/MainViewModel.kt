@@ -111,19 +111,29 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         settingsManager.saveSettings(updated)
     }
 
+    fun setVoiceProfile(profile: String) {
+        val (pitch, rate) = when (profile) {
+            "MONSTER" -> 0.58f to 0.88f
+            "DEEP" -> 0.72f to 0.95f
+            else -> 1.0f to 1.0f
+        }
+        val updated = settings.value.copy(
+            voiceProfile = profile,
+            speechPitch = pitch,
+            speechRate = rate
+        )
+        settingsManager.saveSettings(updated)
+    }
+
     fun testHighAlert() {
         val currentSettings = settings.value
-        val formatted = if (currentSettings.highMessage.contains("%d")) {
-            String.format(currentSettings.highMessage, currentSettings.highThreshold)
-        } else {
-            currentSettings.highMessage
-        }
+        val formatted = currentSettings.resolveHighMessage(currentSettings.highThreshold)
 
         voiceEngine.speak(
             text = formatted,
             speechRate = currentSettings.speechRate,
             pitch = currentSettings.speechPitch,
-            playChimeFirst = true
+            playMonsterEffectFirst = true
         )
 
         settingsManager.addLog(
@@ -137,17 +147,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun testLowAlert() {
         val currentSettings = settings.value
-        val formatted = if (currentSettings.lowMessage.contains("%d")) {
-            String.format(currentSettings.lowMessage, currentSettings.lowThreshold)
-        } else {
-            currentSettings.lowMessage
-        }
+        val formatted = currentSettings.resolveLowMessage(currentSettings.lowThreshold)
 
         voiceEngine.speak(
             text = formatted,
             speechRate = currentSettings.speechRate,
             pitch = currentSettings.speechPitch,
-            playChimeFirst = true
+            playMonsterEffectFirst = true
         )
 
         settingsManager.addLog(

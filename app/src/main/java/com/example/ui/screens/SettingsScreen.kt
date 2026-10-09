@@ -1,11 +1,7 @@
 package com.example.ui.screens
 
-import android.content.Context
-import android.content.Intent
-import android.provider.Settings
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,12 +18,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.BatteryChargingFull
 import androidx.compose.material.icons.filled.BatteryAlert
+import androidx.compose.material.icons.filled.BatteryChargingFull
+import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Power
 import androidx.compose.material.icons.filled.RecordVoiceOver
 import androidx.compose.material.icons.filled.Restore
-import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.ButtonDefaults
@@ -57,8 +54,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -68,12 +63,10 @@ import com.example.ui.theme.CyberAmber
 import com.example.ui.theme.DangerRed
 import com.example.ui.theme.DarkCardBorder
 import com.example.ui.theme.DarkSurface
-import com.example.ui.theme.DarkSurfaceContainer
 import com.example.ui.theme.DarkSurfaceVariant
 import com.example.ui.theme.ElectricCyan
 import com.example.ui.theme.TextPrimary
 import com.example.ui.theme.TextSecondary
-import com.example.ui.theme.TextTertiary
 
 @Composable
 fun SettingsScreen(
@@ -89,22 +82,27 @@ fun SettingsScreen(
         pluggedAlert: Boolean,
         unpluggedAlert: Boolean
     ) -> Unit,
+    onSetVoiceProfile: (String) -> Unit = {},
     onTestHigh: () -> Unit,
     onTestLow: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
     val scrollState = rememberScrollState()
 
     var highEnabled by remember(settings.highAlertEnabled) { mutableStateOf(settings.highAlertEnabled) }
     var highThreshold by remember(settings.highThreshold) { mutableIntStateOf(settings.highThreshold) }
-    var highMessage by remember(settings.highMessage) { mutableStateOf(settings.highMessage) }
+    var highMessage by remember(settings.highMessage, settings.highThreshold) {
+        mutableStateOf(settings.resolveHighMessage(settings.highThreshold))
+    }
 
     var lowEnabled by remember(settings.lowAlertEnabled) { mutableStateOf(settings.lowAlertEnabled) }
     var lowThreshold by remember(settings.lowThreshold) { mutableIntStateOf(settings.lowThreshold) }
-    var lowMessage by remember(settings.lowMessage) { mutableStateOf(settings.lowMessage) }
+    var lowMessage by remember(settings.lowMessage, settings.lowThreshold) {
+        mutableStateOf(settings.resolveLowMessage(settings.lowThreshold))
+    }
 
     var vibration by remember(settings.vibrationEnabled) { mutableStateOf(settings.vibrationEnabled) }
+    var voiceProfile by remember(settings.voiceProfile) { mutableStateOf(settings.voiceProfile) }
     var speechRate by remember(settings.speechRate) { mutableFloatStateOf(settings.speechRate) }
     var speechPitch by remember(settings.speechPitch) { mutableFloatStateOf(settings.speechPitch) }
     var repeatInterval by remember(settings.repeatIntervalMinutes) { mutableIntStateOf(settings.repeatIntervalMinutes) }
@@ -120,14 +118,136 @@ fun SettingsScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(
-            text = "⚙️ إعدادات تنبيهات أبو ظلام",
+            text = "⚙️ إعدادات تنبيهات ونبرة صوت أبو ظلام",
             style = MaterialTheme.typography.titleLarge.copy(
                 fontWeight = FontWeight.Black,
                 color = TextPrimary
             )
         )
 
-        // 1. High Battery Alert Card (85%)
+        // SPECIAL SECTION: Beast / Monster Voice Profile ("صوت قوي كوحش")
+        Card(
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = DarkSurface),
+            border = BorderStroke(1.5.dp, CyberAmber.copy(alpha = 0.6f)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .size(38.dp)
+                            .clip(CircleShape)
+                            .background(CyberAmber.copy(alpha = 0.2f))
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.RecordVoiceOver,
+                            contentDescription = null,
+                            tint = CyberAmber,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+                    Column {
+                        Text(
+                            text = "نبرة صوت أبو ظلام (صوت الوحش 👹)",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = CyberAmber
+                            )
+                        )
+                        Text(
+                            text = "نبرة قوية، جهيرة وضخمة مع صدى وحش جهوري",
+                            style = MaterialTheme.typography.bodySmall.copy(color = TextSecondary)
+                        )
+                    }
+                }
+
+                // Voice Preset Chips
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    val profiles = listOf(
+                        Triple("MONSTER", "صوت وحش كاسر 👹", 0.58f to 0.88f),
+                        Triple("DEEP", "حارس الظلام ⚡", 0.72f to 0.95f),
+                        Triple("STANDARD", "صوت طبيعي 🎙️", 1.0f to 1.0f)
+                    )
+
+                    profiles.forEach { (key, label, params) ->
+                        ElevatedFilterChip(
+                            selected = voiceProfile == key,
+                            onClick = {
+                                voiceProfile = key
+                                speechPitch = params.first
+                                speechRate = params.second
+                                onSetVoiceProfile(key)
+                                onSaveAudioAndGeneral(
+                                    vibration, params.second, params.first, repeatInterval,
+                                    startOnBoot, pluggedAlert, unpluggedAlert
+                                )
+                            },
+                            label = { Text(label, fontSize = 12.sp, fontWeight = FontWeight.Bold) },
+                            colors = FilterChipDefaults.elevatedFilterChipColors(
+                                selectedContainerColor = CyberAmber,
+                                selectedLabelColor = Color.Black,
+                                containerColor = DarkSurfaceVariant,
+                                labelColor = TextPrimary
+                            ),
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+
+                // Pitch and speed sliders
+                Column {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "طبقة الصوت (الجهارة والغلظة):",
+                            style = MaterialTheme.typography.bodySmall.copy(color = TextSecondary)
+                        )
+                        Text(
+                            text = if (speechPitch < 0.65f) "خشن وضخم كوحش 👹 (${String.format("%.2f", speechPitch)})"
+                            else "${String.format("%.2f", speechPitch)}x",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = CyberAmber
+                            )
+                        )
+                    }
+                    Slider(
+                        value = speechPitch,
+                        onValueChange = {
+                            speechPitch = it
+                            voiceProfile = "CUSTOM"
+                            onSaveAudioAndGeneral(
+                                vibration, speechRate, it, repeatInterval,
+                                startOnBoot, pluggedAlert, unpluggedAlert
+                            )
+                        },
+                        valueRange = 0.5f..1.3f,
+                        colors = SliderDefaults.colors(
+                            thumbColor = CyberAmber,
+                            activeTrackColor = CyberAmber,
+                            inactiveTrackColor = DarkSurfaceVariant
+                        )
+                    )
+                }
+            }
+        }
+
+        // 1. High Battery Alert Card (Dynamic Threshold)
         Card(
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = DarkSurface),
@@ -172,7 +292,7 @@ fun SettingsScreen(
                                 )
                             )
                             Text(
-                                text = "ينبهك لإزالة الشاحن وحماية البطارية",
+                                text = "ينطق صوت أبو ظلام بالنسبة المحددة فور وصولها",
                                 style = MaterialTheme.typography.bodySmall.copy(color = TextSecondary)
                             )
                         }
@@ -193,46 +313,58 @@ fun SettingsScreen(
                 }
 
                 if (highEnabled) {
-                    // Quick Level Presets
+                    // Quick Level Presets (80%, 85%, 90%, 95%, 100%)
                     Text(
-                        text = "نسبة الشحن المستهدفة:",
-                        style = MaterialTheme.typography.labelMedium.copy(color = TextSecondary)
+                        text = "اختر نسبة الشحن المستهدفة (سيتغير الصوت معها فوراً):",
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            color = ElectricCyan,
+                            fontWeight = FontWeight.Bold
+                        )
                     )
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         listOf(80, 85, 90, 95, 100).forEach { pct ->
                             ElevatedFilterChip(
                                 selected = highThreshold == pct,
                                 onClick = {
                                     highThreshold = pct
-                                    onSaveHighSettings(highEnabled, pct, highMessage)
+                                    // Update message text dynamically so it mentions the exact new percentage!
+                                    val updatedMsg = GuardianSettings.formatPercentageInText(
+                                        template = highMessage,
+                                        percentage = pct,
+                                        defaultPrefix = "أَبُو ظَلَام: تَمَّ شَحْنُ الهَاتِفِ $pct بِالمِئَة! أَزِل الشَّاحِنَ مِنَ الهَاتِفِ فَوْرَاً!"
+                                    )
+                                    highMessage = updatedMsg
+                                    onSaveHighSettings(highEnabled, pct, updatedMsg)
                                 },
-                                label = { Text("$pct%") },
+                                label = { Text("$pct%", fontWeight = FontWeight.Bold) },
                                 colors = FilterChipDefaults.elevatedFilterChipColors(
                                     selectedContainerColor = ElectricCyan,
                                     selectedLabelColor = Color.Black,
                                     containerColor = DarkSurfaceVariant,
                                     labelColor = TextPrimary
-                                )
+                                ),
+                                modifier = Modifier.weight(1f)
                             )
                         }
                     }
 
-                    // Message Text Field
+                    // Message Text Field with live preview
                     OutlinedTextField(
                         value = highMessage,
                         onValueChange = {
                             highMessage = it
                             onSaveHighSettings(highEnabled, highThreshold, it)
                         },
-                        label = { Text("العبارة الصوتية المنطوقة") },
+                        label = { Text("العبارة المنطوقة بصوت أبو ظلام عند $highThreshold%") },
                         trailingIcon = {
                             IconButton(onClick = {
-                                highMessage = "أبو ظلام، تم شحن الهاتف 85 بالمئة، أزل الشاحن من الهاتف"
-                                onSaveHighSettings(highEnabled, highThreshold, highMessage)
+                                val resetMsg = "أَبُو ظَلَام: تَمَّ شَحْنُ الهَاتِفِ $highThreshold بِالمِئَة! أَزِل الشَّاحِنَ مِنَ الهَاتِفِ فَوْرَاً!"
+                                highMessage = resetMsg
+                                onSaveHighSettings(highEnabled, highThreshold, resetMsg)
                             }) {
                                 Icon(
                                     imageVector = Icons.Default.Restore,
@@ -266,13 +398,13 @@ fun SettingsScreen(
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("استماع لصوت أبو ظلام عند $highThreshold%")
+                        Text("🔊 تجربة صوت الوحش عند $highThreshold%", fontWeight = FontWeight.Bold)
                     }
                 }
             }
         }
 
-        // 2. Low Battery Alert Card (20%)
+        // 2. Low Battery Alert Card (Dynamic Threshold)
         Card(
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = DarkSurface),
@@ -317,7 +449,7 @@ fun SettingsScreen(
                                 )
                             )
                             Text(
-                                text = "ينبهك لشحن الهاتف قبل نفاد الطاقة",
+                                text = "ينطق صوت أبو ظلام بالنسبة المحددة فور انخفاضها",
                                 style = MaterialTheme.typography.bodySmall.copy(color = TextSecondary)
                             )
                         }
@@ -339,28 +471,38 @@ fun SettingsScreen(
 
                 if (lowEnabled) {
                     Text(
-                        text = "نسبة التنبيه المنخفضة:",
-                        style = MaterialTheme.typography.labelMedium.copy(color = TextSecondary)
+                        text = "اختر نسبة الانخفاض المستهدفة:",
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            color = DangerRed,
+                            fontWeight = FontWeight.Bold
+                        )
                     )
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         listOf(10, 15, 20, 25).forEach { pct ->
                             ElevatedFilterChip(
                                 selected = lowThreshold == pct,
                                 onClick = {
                                     lowThreshold = pct
-                                    onSaveLowSettings(lowEnabled, pct, lowMessage)
+                                    val updatedMsg = GuardianSettings.formatPercentageInText(
+                                        template = lowMessage,
+                                        percentage = pct,
+                                        defaultPrefix = "أَبُو ظَلَام: اِشْحَنْ هَاتِفَكَ بِسُرْعَة! البَطَّارِيَّةُ $pct بِالمِئَة!"
+                                    )
+                                    lowMessage = updatedMsg
+                                    onSaveLowSettings(lowEnabled, pct, updatedMsg)
                                 },
-                                label = { Text("$pct%") },
+                                label = { Text("$pct%", fontWeight = FontWeight.Bold) },
                                 colors = FilterChipDefaults.elevatedFilterChipColors(
                                     selectedContainerColor = DangerRed,
                                     selectedLabelColor = Color.White,
                                     containerColor = DarkSurfaceVariant,
                                     labelColor = TextPrimary
-                                )
+                                ),
+                                modifier = Modifier.weight(1f)
                             )
                         }
                     }
@@ -371,11 +513,12 @@ fun SettingsScreen(
                             lowMessage = it
                             onSaveLowSettings(lowEnabled, lowThreshold, it)
                         },
-                        label = { Text("العبارة الصوتية المنطوقة") },
+                        label = { Text("العبارة المنطوقة بصوت أبو ظلام عند $lowThreshold%") },
                         trailingIcon = {
                             IconButton(onClick = {
-                                lowMessage = "أبو ظلام، اشحن هاتفك بسرعة"
-                                onSaveLowSettings(lowEnabled, lowThreshold, lowMessage)
+                                val resetMsg = "أَبُو ظَلَام: اِشْحَنْ هَاتِفَكَ بِسُرْعَة! البَطَّارِيَّةُ $lowThreshold بِالمِئَة!"
+                                lowMessage = resetMsg
+                                onSaveLowSettings(lowEnabled, lowThreshold, resetMsg)
                             }) {
                                 Icon(
                                     imageVector = Icons.Default.Restore,
@@ -409,13 +552,13 @@ fun SettingsScreen(
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("استماع لصوت أبو ظلام عند $lowThreshold%")
+                        Text("🔊 تجربة صوت الوحش عند $lowThreshold%", fontWeight = FontWeight.Bold)
                     }
                 }
             }
         }
 
-        // 3. Audio & Voice Settings
+        // 3. Audio & General Behaviors Card
         Card(
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = DarkSurface),
@@ -428,143 +571,6 @@ fun SettingsScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(CircleShape)
-                            .background(CyberAmber.copy(alpha = 0.15f))
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.RecordVoiceOver,
-                            contentDescription = null,
-                            tint = CyberAmber,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                    Text(
-                        text = "خصائص الصوت والنطق",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = TextPrimary
-                        )
-                    )
-                }
-
-                // Speech Rate Slider
-                Column {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = "سرعة نطق الصوت",
-                            style = MaterialTheme.typography.bodyMedium.copy(color = TextSecondary)
-                        )
-                        Text(
-                            text = String.format("%.1fx", speechRate),
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = CyberAmber
-                            )
-                        )
-                    }
-                    Slider(
-                        value = speechRate,
-                        onValueChange = {
-                            speechRate = it
-                            onSaveAudioAndGeneral(
-                                vibration, speechRate, speechPitch, repeatInterval,
-                                startOnBoot, pluggedAlert, unpluggedAlert
-                            )
-                        },
-                        valueRange = 0.6f..1.5f,
-                        colors = SliderDefaults.colors(
-                            thumbColor = CyberAmber,
-                            activeTrackColor = CyberAmber,
-                            inactiveTrackColor = DarkSurfaceVariant
-                        )
-                    )
-                }
-
-                // Speech Pitch Slider
-                Column {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = "طبقة الصوت (الحدة والجهارة)",
-                            style = MaterialTheme.typography.bodyMedium.copy(color = TextSecondary)
-                        )
-                        Text(
-                            text = String.format("%.1fx", speechPitch),
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = CyberAmber
-                            )
-                        )
-                    }
-                    Slider(
-                        value = speechPitch,
-                        onValueChange = {
-                            speechPitch = it
-                            onSaveAudioAndGeneral(
-                                vibration, speechRate, speechPitch, repeatInterval,
-                                startOnBoot, pluggedAlert, unpluggedAlert
-                            )
-                        },
-                        valueRange = 0.7f..1.4f,
-                        colors = SliderDefaults.colors(
-                            thumbColor = CyberAmber,
-                            activeTrackColor = CyberAmber,
-                            inactiveTrackColor = DarkSurfaceVariant
-                        )
-                    )
-                }
-
-                // Repeat Interval
-                Column {
-                    Text(
-                        text = "تكرار التنبيه إذا لم يتم فصل/توصيل الشاحن:",
-                        style = MaterialTheme.typography.bodyMedium.copy(color = TextSecondary)
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        listOf(
-                            0 to "مرة واحدة",
-                            1 to "كل دقيقة",
-                            2 to "كل دقيقتين",
-                            5 to "كل 5 دقائق"
-                        ).forEach { (minutes, label) ->
-                            ElevatedFilterChip(
-                                selected = repeatInterval == minutes,
-                                onClick = {
-                                    repeatInterval = minutes
-                                    onSaveAudioAndGeneral(
-                                        vibration, speechRate, speechPitch, minutes,
-                                        startOnBoot, pluggedAlert, unpluggedAlert
-                                    )
-                                },
-                                label = { Text(label, fontSize = 12.sp) },
-                                colors = FilterChipDefaults.elevatedFilterChipColors(
-                                    selectedContainerColor = CyberAmber,
-                                    selectedLabelColor = Color.Black,
-                                    containerColor = DarkSurfaceVariant,
-                                    labelColor = TextPrimary
-                                )
-                            )
-                        }
-                    }
-                }
-
                 // Vibration Toggle
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -679,7 +685,7 @@ fun SettingsScreen(
                             style = MaterialTheme.typography.bodyMedium.copy(color = TextPrimary)
                         )
                         Text(
-                            text = "يبدأ درع أبو ظلام بالعمل فور تشغيل الجهاز",
+                            text = "يبدأ درع أبو ظلام بالعمل فور إقلاع النظام",
                             style = MaterialTheme.typography.bodySmall.copy(color = TextSecondary)
                         )
                     }

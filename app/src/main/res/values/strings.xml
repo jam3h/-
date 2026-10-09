@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">أبو ظلام</string>
+    <string name="battery_guardian">درع أبو ظلام</string>
+    <string name="service_running">حارس البطارية نشط ويعمل في الخلفية</string>
+    <string name="service_stopped">حارس البطارية متوقف</string>
+    <string name="notification_channel_name">تنبيهات أبو ظلام للبطارية</string>
+    <string name="notification_channel_desc">إشعارات وتنبيهات صوتية لمستوى شحن البطارية</string>
+</resources>

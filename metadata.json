@@ -1,0 +1,6 @@
+{
+  "name": "أبو ظلام",
+  "description": "تطبيق أبو ظلام الذكي لمراقبة شحن البطارية والتنبيه الصوتي باللغة العربية عند وصول الشحن إلى 85% أو انخفاضه لأقل من 20%.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
